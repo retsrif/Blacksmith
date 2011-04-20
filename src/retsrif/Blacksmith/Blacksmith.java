@@ -1,5 +1,4 @@
 package retsrif.Blacksmith;
-
 import java.io.File;
 
 import org.bukkit.event.Event;
@@ -14,14 +13,15 @@ import com.nijiko.coelho.iConomy.iConomy;
 import cosine.boseconomy.BOSEconomy;
 
 public class Blacksmith extends JavaPlugin {
-	public BPlayerListener bpl = new BPlayerListener(this);
-	public BPluginListener bplugl = new BPluginListener(this);
+	public BPlayerListener bpl;
+	public BPluginListener bplugl;
 	public static int woodBase = 50;
 	public static int stoneBase = 75;
 	public static int ironBase = 150;
 	public static int goldBase = 250;
 	public static int diamondBase = 500;
-	public static String economy = "iconomy";
+	public static boolean bIconomy = false;
+        public static boolean bBoseconomy = false;
 	Configuration config;
 	
 	@Override
@@ -31,18 +31,22 @@ public class Blacksmith extends JavaPlugin {
 
 	@Override
 	public void onEnable() {
-		PluginManager pm = getServer().getPluginManager();
-		pm.registerEvent(Event.Type.PLAYER_INTERACT, bpl, Priority.Normal, this);
-		pm.registerEvent(Event.Type.PLUGIN_ENABLE, bplugl, Priority.Monitor, this);
-		pm.registerEvent(Event.Type.PLUGIN_DISABLE, bplugl, Priority.Monitor, this);
-		
-		config = getConfiguration();
+                config = getConfiguration();
 		if(!(new File(getDataFolder(), "config.yml")).exists()) {
 			defaultConfig();
 		}
 		loadConfig();
-		
-		if(economy.equalsIgnoreCase("iconomy")) {
+
+                bpl = new BPlayerListener(this);
+                bplugl = new BPluginListener(this);
+                
+		PluginManager pm = getServer().getPluginManager();
+		pm.registerEvent(Event.Type.PLAYER_INTERACT, bpl, Priority.Normal, this);
+		pm.registerEvent(Event.Type.PLUGIN_ENABLE, bplugl, Priority.Monitor, this);
+		pm.registerEvent(Event.Type.PLUGIN_DISABLE, bplugl, Priority.Monitor, this);
+
+
+		if(bIconomy) {
 			Plugin ic = pm.getPlugin("iConomy");
 			if(ic != null) {
 				if(ic.isEnabled()) {
@@ -52,7 +56,7 @@ public class Blacksmith extends JavaPlugin {
 				}
 			}
 		}
-		else if(economy.equals("boseconomy")) {
+		else if(bBoseconomy) {
 			Plugin boseconomy = pm.getPlugin("BOSEconomy");
 			if(boseconomy != null) {
 				if(boseconomy.isEnabled()) {
@@ -73,7 +77,8 @@ public class Blacksmith extends JavaPlugin {
 		ironBase = config.getInt("iron-base", 150);
 		goldBase = config.getInt("gold-base", 250);
 		diamondBase = config.getInt("diamond-base", 500);
-		economy = config.getString("economy", "iconomy");
+                bIconomy = config.getBoolean("use-iconomy", false);
+                bBoseconomy = config.getBoolean("use-boseconomy", false);
 	}
 	
 	private void defaultConfig() {
@@ -82,6 +87,11 @@ public class Blacksmith extends JavaPlugin {
 		config.setProperty("iron-base", 150);
 		config.setProperty("gold-base", 250);
 		config.setProperty("diamond-base", 500);
+                config.setProperty("use-iconomy", false);
+                config.setProperty("use-boseconomy", false);
 		config.save();
 	}
+
+        public boolean getIconomyState() { return bIconomy; }
+        public boolean getBoseconomyState() { return bBoseconomy; }
 }

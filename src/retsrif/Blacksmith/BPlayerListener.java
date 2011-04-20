@@ -19,17 +19,19 @@ public class BPlayerListener extends PlayerListener {
 	public static Blacksmith plugin;
 	boolean useIC = false;
 	boolean useBOSE = false;
-	boolean useMat = false;
+	boolean useMat = true;
 	iConomy iconomy;
 	BOSEconomy bose;
 	
 	public BPlayerListener(Blacksmith instance) {
 		plugin = instance;
+                useIC = plugin.getIconomyState();
+                useBOSE = plugin.getBoseconomyState();
 	}
 	
 	public void onPlayerInteract(PlayerInteractEvent event) {
-		if(iconomy == null && bose == null && useMat == false) {
-			setupEcon(Blacksmith.economy);
+		if(iconomy == null && bose == null) {
+			setupEcon();
 		}
 		Player player = event.getPlayer();
 		Block block = event.getClickedBlock();
@@ -55,6 +57,10 @@ public class BPlayerListener extends PlayerListener {
 		int cost = getTotalCost(item);
 			
 		if(getSignType(sign).equalsIgnoreCase("Value")) {
+			if(item.getDurability() == 0) {
+				player.sendMessage(ChatColor.GREEN + "Tool at full durability.");
+				return;
+			}
 			if(useIC || useBOSE) {
 				if(cost<0) {
 					player.sendMessage(ChatColor.RED + "Item not a tool.");
@@ -63,13 +69,17 @@ public class BPlayerListener extends PlayerListener {
 			
 				player.sendMessage(ChatColor.GOLD + "It will cost " + cost + " to repair your tool.");
 			}
-			/*else if(useMat) {
+			else if(useMat) {
 				String mat = getToolMaterial(item);
 				sendMaterialMessages(player, mat);
-			}*/
+			}
 		}
 		
 		if(getSignType(sign).equalsIgnoreCase("Repair")) {
+			if(item.getDurability() == 0) {
+				player.sendMessage(ChatColor.GREEN + "Tool at full durability.");
+				return;
+			}
 			if(useIC || useBOSE) {
 				if(cost<0) {
 					player.sendMessage(ChatColor.RED + "Item not a tool.");
@@ -83,16 +93,16 @@ public class BPlayerListener extends PlayerListener {
 				fixItem(item, player);
 				subtractMoney(player, cost);
 			}
-			/*else if(useMat) {
+			else if(useMat) {
 				String mat = getToolMaterial(item);
-				if(!(playerHas(player, mat))) {
+				Material mate = changeToMat(mat, player);
+				if(!(checkPlayerInv(player, mate))) {
 					sendNoMessages(player, mat);
 					return;
 				}
-				Material mate = changeToMat(mat);
-				removeMat(player, mate);
-				fixItem(item);
-			}*/
+				removeMat(player, mate, item);
+				player.sendMessage(ChatColor.GREEN + "Tool repaired!");
+			}
 
 		}
 		
@@ -209,28 +219,21 @@ public class BPlayerListener extends PlayerListener {
 		if(useIC) {
 			double balance = iconomy.getBank().getAccount(playerName).getBalance();
 			
-			if(balance>cost) {
+			if(balance>cost)
 				return true;
-			}
-			else {
+			else 
 				return false;
-			}
 		}
-		
 		else if(useBOSE) {
 			double balance = bose.getPlayerMoney(playerName);
 			
-			if(balance>cost) {
+			if(balance>cost)
 				return true;
-			}
-			else {
+			else
 				return false;
-			}
 		}
-		
-		else {
+		else
 			return false;
-		}
 	}
 	
 	public void subtractMoney(Player player, int cost) {
@@ -240,30 +243,24 @@ public class BPlayerListener extends PlayerListener {
 			double balance = account.getBalance();
 			account.setBalance(balance-cost);
 		}
-		
 		else if(useBOSE) {
 			double balance = bose.getPlayerMoney(playerName);
-			bose.setPlayerMoney(playerName, (int)balance, true);
+			bose.setPlayerMoney(playerName, (int)balance - cost, true);
 		}
 	}
 	
-	public void setupEcon(String econ) {
-		if(econ.equalsIgnoreCase("iconomy")) {
+	public void setupEcon() {
+		if(useIC) {
 			iconomy = BPluginListener.iconomy;
-			useIC = true;
+			useMat = false;
 		}
-		
-		if(econ.equalsIgnoreCase("boseconomy")) {
-			bose = BPluginListener.bose;
-			useBOSE = true;
-		}
-		
-		//if(econ.equalsIgnoreCase("materials")) {
-			//useMat = true;
-		//}
+        else if(useBOSE) {
+        	bose = BPluginListener.bose;
+        	useMat = false;
+        }
 	}
 	
-	/*public void sendMaterialMessages(Player player, String mat) {
+	public void sendMaterialMessages(Player player, String mat) {
 		if(mat.equalsIgnoreCase("wood")) {
 			player.sendMessage(ChatColor.GOLD + "It will cost one plank to repair your tool.");
 		}
@@ -278,35 +275,10 @@ public class BPlayerListener extends PlayerListener {
 		}
 	}
 	
-	public boolean playerHas(Player player, String mat) {
-		if(mat.equals("wood")) {
-			return checkPlayerInv(player, Material.WOOD);
-		}
-		
-		else if(mat.equals("stone")) {
-			return checkPlayerInv(player, Material.COBBLESTONE);
-		}
-		
-		else if(mat.equals("iron")) {
-			return checkPlayerInv(player, Material.IRON_INGOT);
-		}
-		
-		else if(mat.equals("gold")) {
-			return checkPlayerInv(player, Material.GOLD_INGOT);
-		}
-		
-		else if(mat.equals("diamond")) {
-			return checkPlayerInv(player, Material.DIAMOND);
-		}
-		else {
-			return false;
-		}
-	}
-	
 	public boolean checkPlayerInv(Player player, Material mat) {
 		ItemStack[] inv = player.getInventory().getContents();
 		for(ItemStack is : inv) {
-			if(is.getType() == mat) {
+			if(is != null && is.getType() == mat) {
 				return true;
 			}
 		}
@@ -328,18 +300,23 @@ public class BPlayerListener extends PlayerListener {
 		}
 	}
 	
-	public void removeMat(Player player, Material mat) {
-		//thanks to mcMMO for this
+	public void removeMat(Player player, Material mat, ItemStack item) {
+		//thanks to mcMMO for part of this
 		ItemStack[] inv = player.getInventory().getContents();
+		ItemStack tool = player.getItemInHand();
 		for(ItemStack is : inv) {
 			if(is.getType() == mat) {
 				if(is.getAmount() == 1) {
 					is.setTypeId(0);
 					is.setAmount(0);
+					short dur = 0;
+					tool.setDurability(dur);
 					player.getInventory().setContents(inv);
 				}
 				else {
 					is.setAmount(is.getAmount() - 1);
+					short dur = 0;
+					tool.setDurability(dur);
 					player.getInventory().setContents(inv);
 				}
 				return;
@@ -347,7 +324,7 @@ public class BPlayerListener extends PlayerListener {
 		}
 	}
 	
-	public Material changeToMat(String mat) {
+	public Material changeToMat(String mat, Player player) {
 		if(mat.equals("wood")) {
 			return Material.WOOD;
 		}
@@ -370,7 +347,7 @@ public class BPlayerListener extends PlayerListener {
 		else {
 			return Material.AIR;
 		}
-	}*/
+	}
 	
 	public void fixItem(ItemStack item, Player player) {
 		short newDur = 0;

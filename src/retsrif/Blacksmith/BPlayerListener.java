@@ -10,8 +10,11 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerListener;
 import org.bukkit.inventory.ItemStack;
 
-import com.nijiko.coelho.iConomy.iConomy;
-import com.nijiko.coelho.iConomy.system.Account;
+//iConomy4
+//import com.nijiko.coelho.iConomy.iConomy;
+//import com.nijiko.coelho.iConomy.system.Account;
+//iConomy5
+import com.iConomy.iConomy;
 
 import cosine.boseconomy.BOSEconomy;
 
@@ -217,10 +220,12 @@ public class BPlayerListener extends PlayerListener {
 		String playerName = player.getName();
 		
 		if(useIC) {
-			double balance = iconomy.getBank().getAccount(playerName).getBalance();
+			/*double balance = iconomy.getBank().getAccount(playerName).getBalance();
 			
 			if(balance>cost)
-				return true;
+				return true;*/
+			if(iConomy.getAccount(playerName).getHoldings().balance()>cost)
+				return true
 			else 
 				return false;
 		}
@@ -239,9 +244,11 @@ public class BPlayerListener extends PlayerListener {
 	public void subtractMoney(Player player, int cost) {
 		String playerName = player.getName();
 		if(useIC) {
-			Account account = iconomy.getBank().getAccount(playerName);
+			/*Account account = iconomy.getBank().getAccount(playerName);
 			double balance = account.getBalance();
-			account.setBalance(balance-cost);
+			account.setBalance(balance-cost);*/
+			if(iConomy.hasAccount(playerName))
+				iConomy.getAccount(playerName).getHoldings().subtract(cost);
 		}
 		else if(useBOSE) {
 			double balance = bose.getPlayerMoney(playerName);

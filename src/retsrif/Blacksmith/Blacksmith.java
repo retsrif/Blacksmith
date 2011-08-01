@@ -8,7 +8,10 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.config.Configuration;
 
-import com.nijiko.coelho.iConomy.iConomy;
+//iConomy4
+//import com.nijiko.coelho.iConomy.iConomy;
+//iConomy5
+import com.iConomy.iConomy;
 
 import cosine.boseconomy.BOSEconomy;
 

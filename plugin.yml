@@ -1,4 +1,4 @@
 name: Blacksmith
 version: 1.0.26
-main: retsrif.Blacksmith.blacksmith
+main: retsrif.Blacksmith.Blacksmith
 author: retsrif

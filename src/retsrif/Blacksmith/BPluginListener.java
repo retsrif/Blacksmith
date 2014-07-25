@@ -4,7 +4,10 @@ import org.bukkit.event.server.PluginDisableEvent;
 import org.bukkit.event.server.PluginEnableEvent;
 import org.bukkit.event.server.ServerListener;
 
-import com.nijiko.coelho.iConomy.iConomy;
+//iConomy4
+//import com.nijiko.coelho.iConomy.iConomy;
+//iConomy5
+import com.iConomy.iConomy;
 
 import cosine.boseconomy.BOSEconomy;
 

@@ -8,18 +8,19 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.config.Configuration;
 
-import com.nijiko.coelho.iConomy.iConomy;
+import com.iConomy.iConomy;
 
 import cosine.boseconomy.BOSEconomy;
 
 public class Blacksmith extends JavaPlugin {
 	public BPlayerListener bpl;
 	public BPluginListener bplugl;
-	public static int woodBase = 50;
-	public static int stoneBase = 75;
-	public static int ironBase = 150;
-	public static int goldBase = 250;
-	public static int diamondBase = 500;
+	public static int minCost = 1;
+	public static int woodBase = 20;
+	public static int stoneBase = 50;
+	public static int ironBase = 100;
+	public static int goldBase = 75;
+	public static int diamondBase = 200;
 	public static boolean bIconomy = false;
         public static boolean bBoseconomy = false;
 	Configuration config;
@@ -72,23 +73,25 @@ public class Blacksmith extends JavaPlugin {
 	
 	private void loadConfig() {
 		config.load();
-		woodBase = config.getInt("wood-base", 50);
-		stoneBase = config.getInt("stone-base", 75);
-		ironBase = config.getInt("iron-base", 150);
-		goldBase = config.getInt("gold-base", 250);
-		diamondBase = config.getInt("diamond-base", 500);
+		minCost = config.getInt("minimum-cost", 1);
+		woodBase = config.getInt("wood-base", 20);
+		stoneBase = config.getInt("stone-base", 50);
+		ironBase = config.getInt("iron-base", 100);
+		goldBase = config.getInt("gold-base", 75);
+		diamondBase = config.getInt("diamond-base", 200);
                 bIconomy = config.getBoolean("use-iconomy", false);
                 bBoseconomy = config.getBoolean("use-boseconomy", false);
 	}
 	
 	private void defaultConfig() {
-		config.setProperty("wood-base", 50);
-		config.setProperty("stone-base", 75);
-		config.setProperty("iron-base", 150);
-		config.setProperty("gold-base", 250);
-		config.setProperty("diamond-base", 500);
-                config.setProperty("use-iconomy", false);
-                config.setProperty("use-boseconomy", false);
+		config.setProperty("minimum-cost", 1);
+		config.setProperty("wood-base", 20);
+		config.setProperty("stone-base", 50);
+		config.setProperty("iron-base", 100);
+		config.setProperty("gold-base", 75);
+		config.setProperty("diamond-base", 200);
+        config.setProperty("use-iconomy", false);
+        config.setProperty("use-boseconomy", false);
 		config.save();
 	}
 

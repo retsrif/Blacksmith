@@ -10,8 +10,9 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerListener;
 import org.bukkit.inventory.ItemStack;
 
-import com.nijiko.coelho.iConomy.iConomy;
-import com.nijiko.coelho.iConomy.system.Account;
+import com.iConomy.iConomy;
+import com.iConomy.system.Account;
+
 
 import cosine.boseconomy.BOSEconomy;
 
@@ -55,14 +56,14 @@ public class BPlayerListener extends PlayerListener {
 		}
 	
 		int cost = getTotalCost(item);
-			
+		
 		if(getSignType(sign).equalsIgnoreCase("Value")) {
-			if(item.getDurability() == 0) {
+			if(item.getDurability() == 0 && cost >= 0) {
 				player.sendMessage(ChatColor.GREEN + "Tool at full durability.");
 				return;
 			}
 			if(useIC || useBOSE) {
-				if(cost<0) {
+				if(cost < 0) {
 					player.sendMessage(ChatColor.RED + "Item not a tool.");
 					return;
 				}
@@ -76,16 +77,17 @@ public class BPlayerListener extends PlayerListener {
 		}
 		
 		if(getSignType(sign).equalsIgnoreCase("Repair")) {
-			if(item.getDurability() == 0) {
+			if(item.getDurability() == 0 && cost >= 0) {
 				player.sendMessage(ChatColor.GREEN + "Tool at full durability.");
 				return;
 			}
-			if(useIC || useBOSE) {
-				if(cost<0) {
-					player.sendMessage(ChatColor.RED + "Item not a tool.");
-					return;
-				}
 			
+			if(cost < 0) {
+				player.sendMessage(ChatColor.RED + "Item not a tool.");
+				return;
+			}
+			
+			if(useIC || useBOSE) {
 				if(!isBalanceGreaterThanCost(player, cost)) {
 					player.sendMessage(ChatColor.RED + "Not enough money to repair.");
 					return;
@@ -145,79 +147,94 @@ public class BPlayerListener extends PlayerListener {
 		int durability = tool.getDurability();
 		double ratio = (double)durability/max;
 		double cost = 0;
+		int base = 0;
+		int blocksUsed = getBlocksUsed(tool);
 		String tm = getToolMaterial(tool);
 		
 		if(tm.equalsIgnoreCase("wood")) {
-			cost = Blacksmith.woodBase*ratio;
-			return (int)cost;
+			base = Blacksmith.woodBase;
+		} else if(tm.equalsIgnoreCase("stone")) {
+			base = Blacksmith.stoneBase;
+		} else if(tm.equalsIgnoreCase("iron")) {
+			if(type == Material.IRON_SWORD)
+				ratio = (double)durability/250; //Bukkit has it listed as 59 by accident
+			base = Blacksmith.ironBase;
+		} else if(tm.equalsIgnoreCase("gold")) {
+			base = Blacksmith.goldBase;
+		} else if(tm.equalsIgnoreCase("diamond")) {
+			base = Blacksmith.diamondBase;
 		}
 		
-		if(tm.equalsIgnoreCase("stone")) {
-			cost = Blacksmith.stoneBase*ratio;
-			return (int)cost;
-		}
-		
-		if(tm.equalsIgnoreCase("iron")) {
-			cost = Blacksmith.ironBase*ratio;
-			return (int)cost;
-		}
-
-		if(tm.equalsIgnoreCase("gold")) {
-			cost = Blacksmith.goldBase*ratio;
-			return (int)cost;
-		}
-
-		if(tm.equalsIgnoreCase("diamond")) {
-			cost = Blacksmith.diamondBase*ratio;
-			return (int)cost;
-		}
-		else {
-			return -1;
-		}
+		cost = base*ratio*blocksUsed;
+		if(cost < Blacksmith.minCost)
+			cost = Blacksmith.minCost;
+		return (int)cost;
 	}
 	
 	public String getToolMaterial(ItemStack tool) {
 		Material type = tool.getType();
 		
-		if(type == Material.WOOD_AXE || type == Material.WOOD_HOE || 
-				type == Material.WOOD_PICKAXE || type == Material.WOOD_SPADE || 
-				type == Material.WOOD_SWORD) {
-			return "wood";
-		}
-		
-		else if(type == Material.STONE_AXE || type == Material.STONE_HOE || 
-				type == Material.STONE_PICKAXE || type == Material.STONE_SPADE || 
-				type == Material.STONE_SWORD) {
-			return "stone";
-		}
-		
-		else if(type == Material.IRON_AXE || type == Material.IRON_HOE || 
-				type == Material.IRON_PICKAXE || type == Material.IRON_SPADE || 
-				type == Material.IRON_SWORD) {
-			return "iron";
-		}
-		
-		else if(type == Material.GOLD_AXE || type == Material.GOLD_HOE || 
-				type == Material.GOLD_PICKAXE || type == Material.GOLD_SPADE || 
-				type == Material.GOLD_SWORD) {
-			return "gold";
-		}
-		
-		else if(type == Material.DIAMOND_AXE || type == Material.DIAMOND_HOE || 
-				type == Material.DIAMOND_PICKAXE || type == Material.DIAMOND_SPADE || 
-				type == Material.DIAMOND_SWORD) {
-			return "diamond";
-		}
-		else {
+		if (type == Material.WOOD_AXE || type == Material.WOOD_HOE ||
+			      type == Material.WOOD_PICKAXE || type == Material.WOOD_SPADE ||
+			      type == Material.WOOD_SWORD) {
+		      return "wood";
+		} else if (type == Material.STONE_AXE || type == Material.STONE_HOE ||
+			      type == Material.STONE_PICKAXE || type == Material.STONE_SPADE ||
+			      type == Material.STONE_SWORD || type == Material.LEATHER_BOOTS ||
+			      type == Material.LEATHER_HELMET || type == Material.LEATHER_LEGGINGS ||
+			      type == Material.LEATHER_CHESTPLATE || type == Material.FISHING_ROD) {
+		      return "stone";
+	    } else if (type == Material.IRON_AXE || type == Material.IRON_HOE ||
+			      type == Material.IRON_PICKAXE || type == Material.IRON_SPADE ||
+			      type == Material.IRON_SWORD || type == Material.IRON_BOOTS ||
+			      type == Material.IRON_HELMET || type == Material.IRON_LEGGINGS ||
+			      type == Material.IRON_CHESTPLATE || type == Material.FLINT_AND_STEEL) {
+		      return "iron";
+	    } else if (type == Material.GOLD_AXE || type == Material.GOLD_HOE ||
+			      type == Material.GOLD_PICKAXE || type == Material.GOLD_SPADE ||
+			      type == Material.GOLD_SWORD || type == Material.GOLD_BOOTS ||
+			      type == Material.GOLD_HELMET || type == Material.GOLD_LEGGINGS ||
+			      type == Material.GOLD_CHESTPLATE) {
+		      return "gold";
+	    } else if (type == Material.DIAMOND_AXE || type == Material.DIAMOND_HOE ||
+			      type == Material.DIAMOND_PICKAXE || type == Material.DIAMOND_SPADE ||
+			      type == Material.DIAMOND_SWORD || type == Material.DIAMOND_BOOTS ||
+			      type == Material.DIAMOND_HELMET || type == Material.DIAMOND_LEGGINGS ||
+			      type == Material.DIAMOND_CHESTPLATE) {
+		      return "diamond";
+	    } else {
 			return "";
 		}
 	}
 	
+	public int getBlocksUsed(ItemStack tool){
+	      Material type = tool.getType();
+	      int blocksUsed = 1;
+
+	      if(type == Material.WOOD_SPADE || type == Material.STONE_SPADE || type == Material.IRON_SPADE || type == Material.GOLD_SPADE || type == Material.DIAMOND_SPADE || type == Material.FLINT_AND_STEEL || type == Material.FISHING_ROD)
+	          blocksUsed = 1;
+	      else if(type == Material.WOOD_HOE || type == Material.WOOD_SWORD || type == Material.STONE_HOE || type == Material.STONE_SWORD || type == Material.IRON_HOE || type == Material.IRON_SWORD || type == Material.GOLD_HOE || type == Material.GOLD_SWORD || type == Material.DIAMOND_HOE || type == Material.DIAMOND_SWORD)
+	          blocksUsed = 2;
+	      else if(type == Material.WOOD_AXE || type == Material.WOOD_PICKAXE || type == Material.STONE_AXE || type == Material.STONE_PICKAXE || type == Material.IRON_AXE || type == Material.IRON_PICKAXE || type == Material.GOLD_AXE || type == Material.GOLD_PICKAXE || type == Material.DIAMOND_AXE || type == Material.DIAMOND_PICKAXE)
+	          blocksUsed = 3;
+	      else if(type == Material.LEATHER_BOOTS || type == Material.IRON_BOOTS || type == Material.GOLD_BOOTS || type == Material.DIAMOND_BOOTS)
+	          blocksUsed = 4;
+	      else if(type == Material.LEATHER_HELMET || type == Material.IRON_HELMET || type == Material.GOLD_HELMET || type == Material.DIAMOND_HELMET)
+	          blocksUsed = 5;
+	      else if(type == Material.LEATHER_LEGGINGS || type == Material.IRON_LEGGINGS || type == Material.GOLD_LEGGINGS || type == Material.DIAMOND_LEGGINGS)
+	          blocksUsed = 7;
+	      else if(type == Material.LEATHER_CHESTPLATE || type == Material.IRON_CHESTPLATE || type == Material.GOLD_CHESTPLATE || type == Material.DIAMOND_CHESTPLATE)
+	          blocksUsed = 8;
+
+	      return blocksUsed;
+	  }
+	
+	@SuppressWarnings("static-access")
 	public boolean isBalanceGreaterThanCost(Player player, int cost) {
 		String playerName = player.getName();
 		
 		if(useIC) {
-			double balance = iconomy.getBank().getAccount(playerName).getBalance();
+			double balance = iconomy.getAccount(playerName).getHoldings().balance();
 			
 			if(balance>cost)
 				return true;
@@ -236,12 +253,13 @@ public class BPlayerListener extends PlayerListener {
 			return false;
 	}
 	
+	@SuppressWarnings("static-access")
 	public void subtractMoney(Player player, int cost) {
 		String playerName = player.getName();
 		if(useIC) {
-			Account account = iconomy.getBank().getAccount(playerName);
-			double balance = account.getBalance();
-			account.setBalance(balance-cost);
+			Account account = iconomy.getAccount(playerName);
+			double balance = account.getHoldings().balance();
+			account.getHoldings().set(balance-cost);
 		}
 		else if(useBOSE) {
 			double balance = bose.getPlayerMoney(playerName);
